@@ -7,11 +7,11 @@ import (
 	"math/rand"
 	"os"
 	"time"
+	"unicode"
 )
 
 func main() {
 	menu()
-
 }
 
 func menu() {
@@ -22,92 +22,117 @@ func menu() {
 	fmt.Scan(&choice)
 	switch choice {
 	case 1:
-		Hangman(lettresRandom)
+		Hangman()
 	case 2:
 		return
 	}
 }
 
-type HangmanS struct {
-	Mots     []Mot
-	Position int
-}
+var MotsFromFile []string
 
-type Mot struct {
-	NbLettres         int
-	NbLettresProposes int
-}
-
-var MotFromFile []string
-var lettresRandom string
-
-func Hangman(s string) {
+func Hangman() {
 	rand.Seed(time.Now().UnixNano())
-	MotFromFile = getMotFromFile()
+	MotsFromFile = getMotFromFile()
 
-	randomMot := MotRandom()
-	if randomMot != "" {
-		lettresRandom = PrintLettersWord(randomMot)
-		indices := PrintLettersWord(randomMot)
-
-		PrintRemainingLetters(randomMot, indices)
-
+	RandomMot := MotRandom()
+	usedWord = MotToTiré(RandomMot)
+	if RandomMot != "" {
+		fmt.Println("Mot sélectionné : ", RandomMot)
+		fmt.Println("Mot sélectionné : ", usedWord)
 	}
 
 	fmt.Println("Quelle lettre souhaitez vous rajouter ?")
-	var choice string
-	fmt.Scan(&choice)
-	if choice == s {
-		fmt.Println()
+	for {
+		ChoixLettre(RandomMot)
+		fmt.Println("Mot actuel : ", usedWord)
+		if usedWord == RandomMot {
+			fmt.Println("Félicitations, vous avez trouvé le mot !")
+			break
+		}
 	}
 }
 
-func PrintRemainingLetters(s string, indices []int) {
-	RemainingLetters := ""
-	for i, char := range s {
-		if !contains(indices, i) {
-			RemainingLetters += string(char)
+var usedWord string
+
+func AddLetterInWord(letter rune, RandomMot string) {
+	usedWordRunes := []rune(usedWord)
+	for i, char := range RandomMot {
+		if char == letter {
+			usedWordRunes[i] = letter
 		}
 	}
-	fmt.Println("Lettres restantes :", RemainingLetters)
+	usedWord = string(usedWordRunes)
 }
 
-func contains(arr []int, val int) bool {
-	for _, item := range arr {
-		if item == val {
-			return true
+func ChoixLettre(RandomMot string) {
+	var input string
+	fmt.Print("Entrez une lettre : ")
+	_, err := fmt.Scan(&input)
+	if err != nil {
+		fmt.Println("Erreur lors de la saisie de la lettre:", err)
+		return
+	}
+
+	if len(input) == 0 {
+		fmt.Println("Veuillez entrer une lettre valide.")
+		return
+	}
+
+	letter := rune(input[0])
+
+	letterInWord := false
+
+	letter = unicode.ToLower(letter)
+
+	// Convert the first letter of RandomMot to lowercase for comparison
+	if len(RandomMot) > 0 {
+		firstLetter := rune(RandomMot[0])
+		firstLetter = unicode.ToLower(firstLetter)
+
+		if letter == firstLetter {
+			letterInWord = true
+			// If the guessed letter matches the lowercase first letter, replace it in usedWord
+			usedWordRunes := []rune(usedWord)
+			usedWordRunes[0] = rune(RandomMot[0])
+			usedWord = string(usedWordRunes)
 		}
 	}
-	return false
+
+	for _, char := range RandomMot {
+		if char == letter {
+			letterInWord = true
+			AddLetterInWord(letter, RandomMot)
+		}
+	}
+	fmt.Println("Mot actuel :", usedWord)
+
+	if letterInWord {
+		fmt.Println("Cette lettre est bien dans le mot")
+	} else {
+		fmt.Println("Et non, cette lettre n'est pas dans le mot")
+	}
+
+	AddLetterInWord(letter, RandomMot)
+
 }
 
-func PrintLettersWord(s string) []int {
-	lettresRandom := ""
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	indices := r.Perm(len(s))[:2]
-
-	for i, char := range s {
-		if contains(indices, i) {
-			fmt.Printf("%c ", char)
-			lettresRandom += string(char)
-		} else {
-			fmt.Print("_")
-		}
+func MotToTiré(s string) string {
+	tirés := make([]rune, len(s))
+	for i := range tirés {
+		tirés[i] = '_'
 	}
-	fmt.Println() // Nouvelle ligne après avoir affiché les lettres
-	return indices
+	return string(tirés)
 }
 
 func MotRandom() string {
-	if len(MotFromFile) == 0 {
+	if len(MotsFromFile) == 0 {
 		fmt.Println("La liste des mots est vide.")
 		return ""
 	}
 
-	randomIndex := rand.Intn(len(MotFromFile))
-	randomMot := MotFromFile[randomIndex]
-	return randomMot
+	randomIndex := rand.Intn(len(MotsFromFile))
+	RandomMot := MotsFromFile[randomIndex]
+	return RandomMot
 }
 
 func getMotFromFile() []string {
