@@ -29,11 +29,15 @@ func menu() {
 }
 
 var MotsFromFile []string
+var Mistakes int
+
+const MaxMistakes = 6
 
 func Hangman() {
 	rand.Seed(time.Now().UnixNano())
+	Perdu := false
+	Gagné := false
 	MotsFromFile = getMotFromFile()
-
 	RandomMot := MotRandom()
 	usedWord = MotToTiré(RandomMot)
 	if RandomMot != "" {
@@ -42,13 +46,26 @@ func Hangman() {
 	}
 
 	fmt.Println("Quelle lettre souhaitez vous rajouter ?")
+
 	for {
+
 		ChoixLettre(RandomMot)
 		fmt.Println("Mot actuel : ", usedWord)
 		if usedWord == RandomMot {
 			fmt.Println("Félicitations, vous avez trouvé le mot !")
+			Gagné = true
+		}
+		if Mistakes >= MaxMistakes {
+			fmt.Println("Vous avez atteint le nombre maximum d'erreurs. Vous avez perdu!")
+			Perdu = true
+		}
+		if Perdu {
 			break
 		}
+		if Gagné {
+			break
+		}
+
 	}
 }
 
@@ -65,55 +82,67 @@ func AddLetterInWord(letter rune, RandomMot string) {
 }
 
 func ChoixLettre(RandomMot string) {
-	var input string
-	fmt.Print("Entrez une lettre : ")
-	_, err := fmt.Scan(&input)
-	if err != nil {
-		fmt.Println("Erreur lors de la saisie de la lettre:", err)
+
+	for Mistakes < MaxMistakes && usedWord != RandomMot {
+		var input string
+		fmt.Print("Entrez une lettre : ")
+		_, err := fmt.Scan(&input)
+		if err != nil {
+			fmt.Println("Erreur lors de la saisie de la lettre:", err)
+			return
+		}
+
+		if len(input) == 0 {
+			fmt.Println("Veuillez entrer une lettre valide.")
+			return
+		}
+
+		letter := rune(input[0])
+
+		letterInWord := false
+
+		letter = unicode.ToLower(letter)
+
+		// Convert the first letter of RandomMot to lowercase for comparison
+		if len(RandomMot) > 0 {
+			firstLetter := rune(RandomMot[0])
+			firstLetter = unicode.ToLower(firstLetter)
+
+			if letter == firstLetter {
+				letterInWord = true
+				// If the guessed letter matches the lowercase first letter, replace it in usedWord
+				usedWordRunes := []rune(usedWord)
+				usedWordRunes[0] = rune(RandomMot[0])
+				usedWord = string(usedWordRunes)
+			}
+
+		}
+
+		for _, char := range RandomMot {
+			if char == letter {
+				letterInWord = true
+				AddLetterInWord(letter, RandomMot)
+			}
+		}
+
+		fmt.Println("Mot actuel :", usedWord)
+
+		if letterInWord {
+			fmt.Println("Cette lettre est bien dans le mot")
+		} else {
+			fmt.Println("Et non, cette lettre n'est pas dans le mot")
+			Mistakes += 1
+			fmt.Println("erreurs :", Mistakes)
+
+		}
+
+		AddLetterInWord(letter, RandomMot)
+
+	}
+	if Mistakes >= MaxMistakes {
+		fmt.Println("Vous avez atteint le nombre maximum d'erreurs. Vous avez perdu!")
 		return
 	}
-
-	if len(input) == 0 {
-		fmt.Println("Veuillez entrer une lettre valide.")
-		return
-	}
-
-	letter := rune(input[0])
-
-	letterInWord := false
-
-	letter = unicode.ToLower(letter)
-
-	// Convert the first letter of RandomMot to lowercase for comparison
-	if len(RandomMot) > 0 {
-		firstLetter := rune(RandomMot[0])
-		firstLetter = unicode.ToLower(firstLetter)
-
-		if letter == firstLetter {
-			letterInWord = true
-			// If the guessed letter matches the lowercase first letter, replace it in usedWord
-			usedWordRunes := []rune(usedWord)
-			usedWordRunes[0] = rune(RandomMot[0])
-			usedWord = string(usedWordRunes)
-		}
-	}
-
-	for _, char := range RandomMot {
-		if char == letter {
-			letterInWord = true
-			AddLetterInWord(letter, RandomMot)
-		}
-	}
-	fmt.Println("Mot actuel :", usedWord)
-
-	if letterInWord {
-		fmt.Println("Cette lettre est bien dans le mot")
-	} else {
-		fmt.Println("Et non, cette lettre n'est pas dans le mot")
-	}
-
-	AddLetterInWord(letter, RandomMot)
-
 }
 
 func MotToTiré(s string) string {
