@@ -20,14 +20,15 @@ func Menu() {
 	case 1:
 		Hangman()
 	case 2:
-		return
+		println("Au revoir ...")
+		os.Exit(1)
 	}
 }
 
 var MotsFromFile []string
 var Mistakes int
 
-const MaxMistakes = 6
+const MaxMistakes = 10
 
 func Hangman() {
 	rand.Seed(time.Now().UnixNano())
@@ -35,7 +36,7 @@ func Hangman() {
 	Gagné := false
 	MotsFromFile = GetMotFromFile()
 	RandomMot := MotRandom()
-	usedWord = MotToTiré(RandomMot)
+	usedWord = MotToTire(RandomMot)
 	if RandomMot != "" {
 		fmt.Println("Mot sélectionné : ", RandomMot)
 		fmt.Println("Mot sélectionné : ", usedWord)
@@ -53,9 +54,14 @@ func Hangman() {
 		}
 		if Mistakes >= MaxMistakes {
 			fmt.Println("Vous avez atteint le nombre maximum d'erreurs. Vous avez perdu!")
+			hangman := GetHangman(Mistakes)
+			fmt.Println(hangman)
+			fmt.Println(hangman)
 			Perdu = true
 		}
 		if Perdu {
+			hangmanFig := GetHangman(11)
+			fmt.Println(hangmanFig)
 			break
 		}
 		if Gagné {
@@ -81,7 +87,7 @@ func ChoixLettre(RandomMot string) {
 
 	for Mistakes < MaxMistakes && usedWord != RandomMot {
 		var input string
-		fmt.Print("Entrez une lettre : ")
+		fmt.Print("Entrez une lettre ou un mot : ")
 		_, err := fmt.Scan(&input)
 		if err != nil {
 			fmt.Println("Erreur lors de la saisie de la lettre:", err)
@@ -91,62 +97,71 @@ func ChoixLettre(RandomMot string) {
 		if len(input) == 0 {
 			fmt.Println("Veuillez entrer une lettre valide.")
 			return
-		}
-
-		letter := rune(input[0])
-
-		letterInWord := false
-
-		letter = unicode.ToLower(letter)
-
-		// Convert the first letter of RandomMot to lowercase for comparison
-		if len(RandomMot) > 0 {
-			firstLetter := rune(RandomMot[0])
-			firstLetter = unicode.ToLower(firstLetter)
-
-			if letter == firstLetter {
-				letterInWord = true
-				// If the guessed letter matches the lowercase first letter, replace it in usedWord
-				usedWordRunes := []rune(usedWord)
-				usedWordRunes[0] = rune(RandomMot[0])
-				usedWord = string(usedWordRunes)
+		} else if len(input) == len(RandomMot) {
+			word := input
+			if word == RandomMot {
+				usedWord = word
+			} else {
+				Mistakes += 2
+				println("Perdu ! Ce n'était pas le bon mot. Vous avez perdu 2 points.")
 			}
-
-		}
-
-		for _, char := range RandomMot {
-			if char == letter {
-				letterInWord = true
-				AddLetterInWord(letter, RandomMot)
-			}
-		}
-
-		fmt.Println("Mot actuel :", usedWord)
-
-		if letterInWord {
-			fmt.Println("Cette lettre est bien dans le mot")
 		} else {
-			fmt.Println("Et non, cette lettre n'est pas dans le mot")
-			Mistakes += 1
-			fmt.Println("erreurs :", Mistakes)
+			letter := rune(input[0])
 
+			letterInWord := false
+
+			letter = unicode.ToLower(letter)
+
+			if len(RandomMot) > 0 {
+				firstLetter := rune(RandomMot[0])
+				firstLetter = unicode.ToLower(firstLetter)
+
+				if letter == firstLetter {
+					letterInWord = true
+					usedWordRunes := []rune(usedWord)
+					usedWordRunes[0] = rune(RandomMot[0])
+					usedWord = string(usedWordRunes)
+				}
+			}
+
+			for _, char := range RandomMot {
+				if char == letter {
+					letterInWord = true
+					AddLetterInWord(letter, RandomMot)
+				}
+			}
+
+			fmt.Println("Mot actuel :", usedWord)
+
+			if letterInWord {
+				fmt.Println("Cette lettre est bien dans le mot")
+			} else {
+				fmt.Println("Et non, cette lettre n'est pas dans le mot")
+				Mistakes += 1
+				fmt.Println("Lettres non comprises dans le mot :", letter)
+				hangman := GetHangman(Mistakes)
+				fmt.Println(hangman)
+			}
+			AddLetterInWord(letter, RandomMot)
 		}
-
-		AddLetterInWord(letter, RandomMot)
-
-	}
-	if Mistakes >= MaxMistakes {
-		fmt.Println("Vous avez atteint le nombre maximum d'erreurs. Vous avez perdu!")
-		return
+		if Mistakes >= MaxMistakes {
+			fmt.Println("Vous avez atteint le nombre maximum d'erreurs. Vous avez perdu!")
+			return
+		}
 	}
 }
 
-func MotToTiré(s string) string {
-	tirés := make([]rune, len(s))
-	for i := range tirés {
-		tirés[i] = '_'
+func MotToTire(s string) string {
+	rand.Seed(time.Now().Unix())
+	lettreR := rand.Intn(len(s))
+	tires := make([]rune, len(s))
+	for i := range tires {
+		tires[i] = '_'
+		if lettreR == i {
+			tires[i] = rune(s[lettreR])
+		}
 	}
-	return string(tirés)
+	return string(tires)
 }
 
 func MotRandom() string {
@@ -154,7 +169,6 @@ func MotRandom() string {
 		fmt.Println("La liste des mots est vide.")
 		return ""
 	}
-
 	randomIndex := rand.Intn(len(MotsFromFile))
 	RandomMot := MotsFromFile[randomIndex]
 	return RandomMot
@@ -173,4 +187,85 @@ func GetMotFromFile() []string {
 		lines = append(lines, fileScanner.Text())
 	}
 	return lines
+}
+func GetHangman(mistakes int) string {
+	hangmanFigures := []string{
+		`
+=========
+`, `	
+      |
+      |
+      |
+      |
+      |
+=========
+`, `
+  +---+
+      |
+      |
+      |
+      |
+      |
+=========
+`, `
+  +---+
+  |   |
+      |
+      |
+      |
+      |
+=========
+`, `
+  +---+
+  |   |
+  O   |
+      |
+      |
+      |
+=========
+`, `
+  +---+
+  |   |
+  O   |
+  |   |
+      |
+      |
+=========
+`, `
+  +---+
+  |   |
+  O   |
+ /|   |
+      |
+      |
+=========
+`, `
+  +---+
+  |   |
+  O   |
+ /|\  |
+      |
+      |
+=========
+`, `
+  +---+
+  |   |
+  O   |
+ /|\  |
+ /    |
+      |
+=========
+`, `
+  +---+
+  |   |
+  O   |
+ /|\  |
+ / \  |
+      |
+=========
+`}
+	if mistakes >= 0 && mistakes < len(hangmanFigures) {
+		return hangmanFigures[(mistakes)-1]
+	}
+	return "Invalid number of mistakes"
 }
