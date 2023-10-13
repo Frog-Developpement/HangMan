@@ -65,7 +65,6 @@ func Hangman() {
 		if Gagné {
 			break
 		}
-
 	}
 }
 
