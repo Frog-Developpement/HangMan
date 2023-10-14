@@ -43,8 +43,6 @@ func Hangman() {
 		fmt.Println("Mot sélectionné : ", usedWord)
 	}
 
-	fmt.Println("Quelle lettre souhaitez vous rajouter ?")
-
 	for {
 
 		ChoixLettre(RandomMot)
@@ -91,58 +89,90 @@ func ChoixLettre(RandomMot string) {
 	var SUsedLetter []string
 	LetterInWord := false
 	for Mistakes < MaxMistakes && usedWord != RandomMot {
-		var input string
-		fmt.Print("Entrez une lettre ou un mot : ")
-		_, err := fmt.Scan(&input)
-		if err != nil {
-			fmt.Println("Erreur lors de la saisie de la lettre:", err)
-			return
-		}
+		var choice int
+		fmt.Println("Voulez-vous :")
+		fmt.Println("1. Ajouter une lettre")
+		fmt.Println("2. Entrer un mot")
+		fmt.Scan(&choice)
+		switch choice {
+		case 1:
+			var input string
+			fmt.Print("Entrez une lettre : ")
+			_, err := fmt.Scan(&input)
+			if err != nil {
+				fmt.Println("Erreur lors de la saisie de la lettre:", err)
+				return
+			}
 
-		if len(input) == 0 {
-			fmt.Println("Veuillez entrer une lettre valide.")
-			return
-		} else if len(input) == len(RandomMot) {
-			word := input
-			if word == RandomMot {
-				usedWord = word
+			if len(input) == 0 {
+				fmt.Println("Veuillez entrer une lettre valide.")
+				return
+
+			} else {
+				input = strings.ToLower(input)
+				letter := rune(input[0])
+				LetterInWord = false
+				for _, char := range RandomMot {
+					if unicode.ToLower(char) == letter {
+						LetterInWord = true
+						AddLetterInWord(char, RandomMot)
+					}
+				}
+
+				if LetterInWord {
+					fmt.Println("Cette lettre est bien dans le mot")
+					fmt.Println("Mot actuel :", usedWord)
+				} else {
+					fmt.Println("Et non, cette lettre n'est pas dans le mot")
+					fmt.Println("Lettre non présente dans le mot:", input)
+					Mistakes++
+					fmt.Println("Mot actuel :", usedWord)
+					if !contains(SUsedLetter, input) {
+						SUsedLetter = append(SUsedLetter, input)
+						fmt.Println("Lettres utilisées et non présentes dans le mot :", SUsedLetter)
+
+					} else {
+						fmt.Println("Vous avez déjà essayé cette lettre mais n'y étais pas...")
+					}
+					hangman := GetHangman(Mistakes)
+					fmt.Println(hangman)
+				}
+			}
+
+		case 2:
+			var input string
+			fmt.Print("Entrez un mot : ")
+			_, err := fmt.Scan(&input)
+			if err != nil {
+				fmt.Println("Erreur lors de la saisie de la lettre:", err)
+				return
+			}
+
+			if len(input) < 4 {
+				fmt.Println("Veuillez entrer un mot valide.")
+				return
+			} else if len(input) == len(RandomMot) {
+				if strings.EqualFold(input, RandomMot) {
+					usedWord = RandomMot
+				} else {
+
+					Mistakes += 2
+					println("Perdu ! Ce n'était pas le bon mot. Vous avez perdu 2 points.")
+					fmt.Println("Mot actuel :", usedWord)
+					hangman := GetHangman(Mistakes)
+					fmt.Println(hangman)
+				}
 			} else {
 				Mistakes += 2
 				println("Perdu ! Ce n'était pas le bon mot. Vous avez perdu 2 points.")
-			}
-		} else {
-			input = strings.ToLower(input)
-			letter := rune(input[0])
-			LetterInWord = false
-			for _, char := range RandomMot {
-				if unicode.ToLower(char) == letter {
-					LetterInWord = true
-					AddLetterInWord(char, RandomMot)
-				}
-			}
-
-			if LetterInWord {
-				fmt.Println("Cette lettre est bien dans le mot")
 				fmt.Println("Mot actuel :", usedWord)
-			} else {
-				fmt.Println("Et non, cette lettre n'est pas dans le mot")
-				fmt.Println("Lettre non présente dans le mot:", input)
-				Mistakes++
-				fmt.Println("Mot actuel :", usedWord)
-				if !contains(SUsedLetter, input) {
-					SUsedLetter = append(SUsedLetter, input)
-					fmt.Println("Lettres utilisées et non présentes dans le mot :", SUsedLetter)
-
-				} else {
-					fmt.Println("Vous avez déjà essayé cette lettre mais n'y étais pas...")
-				}
 				hangman := GetHangman(Mistakes)
 				fmt.Println(hangman)
 			}
+
 		}
 	}
 }
-
 func MotToTire(s string) string {
 	rand.Seed(time.Now().Unix())
 	lettreR := rand.Intn(len(s))
