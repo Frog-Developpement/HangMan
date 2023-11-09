@@ -6,21 +6,28 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
 )
 
 func Menu() {
+	ClearConsole()
 	var choice int
-	fmt.Println("Que souhaitez vous faire ?")
-	fmt.Println("1. Jouer")
+	fmt.Print("Bienvenue dans le jeu du pendu !\n")
+	fmt.Printf("\nLe but est de trouver un mot en entrant les lettres que vous pensez être présentes dans le mot. \nVous pouvez aussi entrer le mot directement si vous pensez que c'est le bon.\nAttention aux erreurs ce serait une erreur !\n")
+	fmt.Println("\nQue souhaitez vous faire ?")
+	fmt.Println("\n1. Lancer une partie")
 	fmt.Println("2. Quitter")
 	fmt.Scan(&choice)
 	switch choice {
 	case 1:
+		ClearConsole()
 		Hangman()
 	case 2:
+		ClearConsole()
 		println("Au revoir ...")
 		os.Exit(1)
 	}
@@ -39,8 +46,8 @@ func Hangman() {
 	RandomMot := MotRandom()
 	usedWord = MotToTire(RandomMot)
 	if RandomMot != "" {
-		fmt.Println("Mot sélectionné : ", RandomMot)
-		fmt.Println("Mot sélectionné : ", usedWord)
+
+		fmt.Println("\nMot à trouver : ", usedWord)
 	}
 
 	for {
@@ -90,21 +97,21 @@ func ChoixLettre(RandomMot string) {
 	LetterInWord := false
 	for Mistakes < MaxMistakes && usedWord != RandomMot {
 		var choice int
-		fmt.Println("Voulez-vous :")
-		fmt.Println("1. Ajouter une lettre")
-		fmt.Println("2. Entrer un mot")
+		fmt.Println("\nQue voulez-vous faire ?")
+		fmt.Println("\n1. Choisir une lettre")
+		fmt.Println("2. Saisir le mot entier")
 		fmt.Scan(&choice)
 		switch choice {
 		case 1:
+
 			var input string
-			fmt.Print("Entrez une lettre : ")
+			fmt.Print("\nEntrez une lettre : ")
 			_, err := fmt.Scan(&input)
 			if err != nil {
 				fmt.Println("Erreur lors de la saisie de la lettre:", err)
 				return
 			}
-
-			if len(input) == 0 {
+			if len(input) == 0 || len(input) > 1 || !unicode.IsLetter([]rune(input)[0]) {
 				fmt.Println("Veuillez entrer une lettre valide.")
 				return
 
@@ -120,11 +127,13 @@ func ChoixLettre(RandomMot string) {
 				}
 
 				if LetterInWord {
+					ClearConsole()
 					fmt.Println("Cette lettre est bien dans le mot")
 					fmt.Println("Mot actuel :", usedWord)
+					fmt.Println("Lettres saisies et non présentes dans le mot :", SUsedLetter)
 				} else {
-					fmt.Println("Et non, cette lettre n'est pas dans le mot")
-					fmt.Println("Lettre non présente dans le mot:", input)
+					ClearConsole()
+					fmt.Print("Et non, cette lettre n'est pas dans le mot\n\n")
 					Mistakes++
 					fmt.Println("Mot actuel :", usedWord)
 					if !contains(SUsedLetter, input) {
@@ -134,14 +143,19 @@ func ChoixLettre(RandomMot string) {
 					} else {
 						fmt.Println("Vous avez déjà essayé cette lettre mais n'y étais pas...")
 					}
+
 					hangman := GetHangman(Mistakes)
 					fmt.Println(hangman)
 				}
 			}
 
 		case 2:
+			ClearConsole()
+			fmt.Println("Mot actuel :", usedWord)
+			fmt.Println("Lettres saisies et non présentes dans le mot :", SUsedLetter)
 			var input string
-			fmt.Print("Entrez un mot : ")
+			fmt.Print("\nEntrez un mot : ")
+
 			_, err := fmt.Scan(&input)
 			if err != nil {
 				fmt.Println("Erreur lors de la saisie de la lettre:", err)
@@ -149,20 +163,23 @@ func ChoixLettre(RandomMot string) {
 			}
 
 			if len(input) < 4 {
+				ClearConsole()
 				fmt.Println("Veuillez entrer un mot valide.")
 				return
 			} else if len(input) == len(RandomMot) {
 				if strings.EqualFold(input, RandomMot) {
 					usedWord = RandomMot
 				} else {
-
+					ClearConsole()
 					Mistakes += 2
 					println("Perdu ! Ce n'était pas le bon mot. Vous avez perdu 2 points.")
 					fmt.Println("Mot actuel :", usedWord)
+					fmt.Println("Lettres saisies et non présentes dans le mot :", SUsedLetter)
 					hangman := GetHangman(Mistakes)
 					fmt.Println(hangman)
 				}
 			} else {
+				ClearConsole()
 				Mistakes += 2
 				println("Perdu ! Ce n'était pas le bon mot. Vous avez perdu 2 points.")
 				fmt.Println("Mot actuel :", usedWord)
@@ -194,6 +211,18 @@ func MotRandom() string {
 	randomIndex := rand.Intn(len(MotsFromFile))
 	RandomMot := MotsFromFile[randomIndex]
 	return RandomMot
+}
+
+func ClearConsole() {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	} else {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
 }
 
 func GetMotFromFile() []string {
@@ -289,5 +318,5 @@ func GetHangman(mistakes int) string {
 	if mistakes >= 0 && mistakes <= len(hangmanFigures) {
 		return hangmanFigures[(mistakes - 1)]
 	}
-	return "kk"
+	return "erreur"
 }

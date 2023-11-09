@@ -1,5 +1,0 @@
-Zitoun :
-- BDD JSON
-    - Stockage lettres déjà proposées dans la BDD
-    - Se servir de la BDD afin de pouvoir reprendre le jeu si crash ET/OU réinitialiser le jeu
-    - Jeu fini : possibilité de recommencer (clear DB) OU d'arrêter (save DB + display stats (from last party) when game starts)
