@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel = "stylesheet" href="/static/style.css" >
+    <title>Création d'un compte</title>
+</head>
+<body>
+<div class = "page">
+    <h1>Créer un compte</h1>
+<div class = "form">
+    <form action="/templates/treatment" method="post">
+        <div class = "pseudo">
+            <label for="pseudo"><strong>Entrez votre pseudo :</strong></label>
+            <input type="text" name="pseudo"><br>
+        </div>
+       
+        <div class="radio">
+            <label>
+                <input type="radio" name="difficulty" value="Facile" checked>
+                Facile
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="Intermediaire">
+                Intermediaire
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="Difficile">
+                Difficile
+            </label>
+        </div>
+        </div>
+        <div class = "submit">
+            <input type="submit" value="Lancer la partie">
+        </div>
+    </form>
+</div>
+</div>
+</body>
+</html>
