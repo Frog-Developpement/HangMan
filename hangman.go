@@ -11,34 +11,32 @@ import (
 	"time"
 )
 
-var game Game
-
-type Game struct {
-	Word             string
-	CurrentWord      string
-	IncorrectGuesses int
-	MaxIncorrect     int
-	Difference       int
-	Difficulte       string
-	IncorrectLetters []string
-	Outcome          string
-	Pseudo           string
+type Jeu struct {
+	Mot        string
+	MotActuel  string
+	Erreurs    int
+	MaxErreurs int
+	Difference int
+	Difficulte string
+	LettresNP  []string
+	Sortie     string
+	Pseudo     string
 }
 
-var currentGame *Game
+var JeuActuel *Jeu
 var tpl *template.Template
 
-func getRandomWord() (string, error) {
+func MotRandom() (string, error) {
 	file, err := os.Open("noms_monstres.txt")
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
 
-	var words []string
+	var Mots []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		words = append(words, scanner.Text())
+		Mots = append(Mots, scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -46,10 +44,10 @@ func getRandomWord() (string, error) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	return words[rand.Intn(len(words))], nil
+	return Mots[rand.Intn(len(Mots))], nil
 }
 
-func getMaxIncorrect(difficulty string) int {
+func MaxErreurs(difficulty string) int {
 	switch difficulty {
 	case "Facile":
 		return 8
@@ -62,79 +60,80 @@ func getMaxIncorrect(difficulty string) int {
 	}
 }
 
-func startNewGame(pseudo, difficulty string) *Game {
-	wordToGuess, err := getRandomWord()
+func NouvellePartie(pseudo, difficulty string) *Jeu {
+	MotToGuess, err := MotRandom()
 	if err != nil {
 		panic(err)
 	}
 
-	maxIncorrect := getMaxIncorrect(difficulty)
+	MaxErreurs := MaxErreurs(difficulty)
 
-	return &Game{
-		Word:             wordToGuess,
-		CurrentWord:      strings.Repeat("_", len(wordToGuess)),
-		IncorrectGuesses: 0,
-		MaxIncorrect:     maxIncorrect,
-		Difficulte:       difficulty,
-		IncorrectLetters: []string{},
-		Outcome:          "",
-		Pseudo:           pseudo,
+	return &Jeu{
+		Mot:        MotToGuess,
+		MotActuel:  strings.Repeat("_", len(MotToGuess)),
+		Erreurs:    0,
+		MaxErreurs: MaxErreurs,
+		Difficulte: difficulty,
+		LettresNP:  []string{},
+		Sortie:     "",
+		Pseudo:     pseudo,
 	}
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if currentGame == nil {
-		currentGame = startNewGame(currentGame.Pseudo, currentGame.Difficulte)
+func Index(w http.ResponseWriter, r *http.Request) {
+	if JeuActuel == nil {
+		JeuActuel = NouvellePartie(JeuActuel.Pseudo, JeuActuel.Difficulte)
 
 	}
 
-	game := currentGame
+	jeu := JeuActuel
 
 	if r.Method == http.MethodPost {
 		guess := strings.ToLower(r.FormValue("guess"))
 
 		if len(guess) == 1 {
-			if strings.Contains(strings.ToLower(game.Word), strings.ToLower(guess)) {
-				for i, letter := range game.Word {
+			if strings.Contains(strings.ToLower(jeu.Mot), strings.ToLower(guess)) {
+				for i, letter := range jeu.Mot {
 					if strings.EqualFold(string(letter), guess) {
-						game.CurrentWord = game.CurrentWord[:i] + string(letter) + game.CurrentWord[i+1:]
-						game.Outcome = "Oui, cette lettre est dans le mot"
+						jeu.MotActuel = jeu.MotActuel[:i] + string(letter) + jeu.MotActuel[i+1:]
+						jeu.Sortie = "Oui, cette lettre est dans le mot"
 
 					}
 				}
 			} else {
-				game.IncorrectGuesses++
-				game.IncorrectLetters = append(game.IncorrectLetters, guess)
-				game.Difference = game.MaxIncorrect - game.IncorrectGuesses
-				game.Outcome = "Non, cette lettre n'est pas dans le mot"
+				jeu.Erreurs++
+				jeu.LettresNP = append(jeu.LettresNP, guess)
+				jeu.Difference = jeu.MaxErreurs - jeu.Erreurs
+				jeu.Sortie = "Non, cette lettre n'est pas dans le mot"
 
 			}
 		} else if len(guess) > 1 {
-			// Devinez un mot
-			if strings.EqualFold(guess, game.Word) {
-				game.CurrentWord = game.Word
-				game.Outcome = "Vous avez gagné ! Le mot était bien " + game.Word
+
+			if strings.EqualFold(guess, jeu.Mot) {
+				jeu.MotActuel = jeu.Mot
+				jeu.Sortie = "Vous avez gagné ! Le mot était bien " + jeu.Mot
 			} else {
-				game.IncorrectGuesses += 2
-				game.Outcome = "Non ce n'est pas le mot à trouver + 2 erreurs"
+				jeu.Erreurs += 2
+				jeu.Sortie = "Non ce n'est pas le mot à trouver + 2 erreurs"
 
 			}
 		}
 
-		if game.IncorrectGuesses >= game.MaxIncorrect {
-			game.Outcome = "Vous avez perdu ! Le mot correct était : " + game.Word
+		if jeu.Erreurs >= jeu.MaxErreurs {
+			jeu.Erreurs = jeu.MaxErreurs
+			jeu.Sortie = "Vous avez perdu ! Le mot correct était : " + jeu.Mot
 		}
 
-		if !strings.Contains(game.CurrentWord, "_") {
-			game.Outcome = "Vous avez gagné ! Le mot était bien" + game.Word
+		if !strings.Contains(jeu.MotActuel, "_") {
+			jeu.Sortie = "Vous avez gagné ! Le mot était bien" + jeu.Mot
 
 		}
 	}
 
-	renderTemplate(w, "template", game)
+	AfficherTemplate(w, "template", jeu)
 }
 
-func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
+func AfficherTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	tmplFile := fmt.Sprintf("templates/%s.html", tmpl)
 	t, err := template.ParseFiles(tmplFile)
 	if err != nil {
@@ -148,27 +147,32 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	}
 }
 
-func treatmentHandler(w http.ResponseWriter, r *http.Request) {
+func Traitement(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		pseudo := r.FormValue("pseudo")
 		difficulty := r.FormValue("difficulty")
-		currentGame = startNewGame(pseudo, difficulty)
+		JeuActuel = NouvellePartie(pseudo, difficulty)
 		http.Redirect(w, r, "/templates/template", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func initHandler(w http.ResponseWriter, r *http.Request) {
-	renderTemplate(w, "init", nil)
+func Init(w http.ResponseWriter, r *http.Request) {
+	AfficherTemplate(w, "init", nil)
+}
+
+func Menu(w http.ResponseWriter, r *http.Request) {
+	AfficherTemplate(w, "menu", nil)
 }
 
 func main() {
 	tpl = template.Must(template.ParseFiles("templates/template.html"))
 
-	http.HandleFunc("/templates/template", indexHandler)
-	http.HandleFunc("/templates/init", initHandler)
-	http.HandleFunc("/templates/treatment", treatmentHandler)
+	http.HandleFunc("/templates/menu", Menu)
+	http.HandleFunc("/templates/template", Index)
+	http.HandleFunc("/templates/init", Init)
+	http.HandleFunc("/templates/treatment", Traitement)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	fmt.Println("Serveur en cours d'exécution sur http://localhost:8080")
 	http.ListenAndServe(":8080", nil)

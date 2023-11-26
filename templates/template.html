@@ -7,20 +7,30 @@
 <body>
     
     <h1>Jeu du Pendu</h1>
-    
-    <p>Mot actuel : {{.CurrentWord}}</p>
+    <div class ="page">
+    <div class = "jeu">
+    <p>Pseudo : {{.Pseudo}}</p>
+    <p>Mot actuel : {{.MotActuel}}</p>
     <p>Difficulté : {{.Difficulte}}</p>
     
-    <p>Nombre d'erreurs : {{.IncorrectGuesses}}/{{.MaxIncorrect}}</p>
-    <p>Lettres incorrectes : {{.IncorrectLetters}}</p>
+    <p>Nombre d'erreurs : {{.Erreurs}}/{{.MaxErreurs}}</p>
+    <p>Lettres incorrectes : {{.LettresNP}}</p>
     <form method="post">
         <label for="guess">Devinez une lettre ou un mot : </label>
         <input type="text" id="guess" name="guess" required>
         <input type="submit" value="Soumettre">
-    </form>
-    <p>{{.Outcome}}</p>
-    
-    <img src="/static/hangman_{{.IncorrectGuesses}}.png" alt="Pendu">
-   
+    </form><br>
+    <p>{{.Sortie}}</p>
+    {{if ge .Erreurs .MaxErreurs }}
+    <form method="post">
+    <input formaction="/templates/menu" type="submit" value="Retourner au menu">
+</form>
+
+    {{else}}
+    <p></p>
+    {{end}}
+</div>
+    <img src="/static/hangman{{.MaxErreurs}}_{{.Erreurs}}.png" alt="Pendu">
+</div>
 </body>
 </html>

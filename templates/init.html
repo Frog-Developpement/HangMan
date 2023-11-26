@@ -4,38 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel = "stylesheet" href="/static/style.css" >
-    <title>Création d'un compte</title>
+    
+    <title>Nouvelle Partie</title>
 </head>
 <body>
-<div class = "page">
-    <h1>Créer un compte</h1>
+    <h1>Nouvelle Partie</h1>
 <div class = "form">
     <form action="/templates/treatment" method="post">
-        <div class = "pseudo">
+      
             <label for="pseudo"><strong>Entrez votre pseudo :</strong></label>
             <input type="text" name="pseudo"><br>
-        </div>
+            
+            <div class="difficulty-container">
+                <input type="radio" name="difficulty" id="facile" value="Facile" >
+                <label for="facile">Facile</label>
+            
+                <input type="radio" name="difficulty" id="intermediaire" value="Intermediaire" checked>
+                <label for="intermediaire">Intermediaire</label>
+            
+                <input type="radio" name="difficulty" id="difficile" value="Difficile">
+                <label for="difficile">Difficile</label>
+            </div>
+     
+     
        
-        <div class="radio">
-            <label>
-                <input type="radio" name="difficulty" value="Facile" checked>
-                Facile
-            </label>
-            <label>
-                <input type="radio" name="difficulty" value="Intermediaire">
-                Intermediaire
-            </label>
-            <label>
-                <input type="radio" name="difficulty" value="Difficile">
-                Difficile
-            </label>
-        </div>
-        </div>
-        <div class = "submit">
             <input type="submit" value="Lancer la partie">
-        </div>
+  
     </form>
-</div>
+
 </div>
 </body>
 </html>
