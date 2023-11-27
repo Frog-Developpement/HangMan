@@ -166,7 +166,7 @@ func Menu(w http.ResponseWriter, r *http.Request) {
 	AfficherTemplate(w, "menu", nil)
 }
 
-func main() {
+func Handle() {
 	tpl = template.Must(template.ParseFiles("templates/template.html"))
 
 	http.HandleFunc("/templates/menu", Menu)
